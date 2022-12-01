@@ -4,18 +4,17 @@ function dy = hh_diff_eq(t,y, U, Ut, vrest, z, x)
     Id = interp1(Ut, U, t);
 
     % Assign Input Parameters
-    vin = y(1:length(x)); 
+    vN = y(1:length(x)); 
     m= y(length(x)+1:2*length(x));
     h= y(2*length(x) + 1:3*length(x));
-    vN = y(3*length(x) + 1:4*length(x));
     
     % Max Conductances (mS/cm2)
     gNABar = 1445; gLeak = 128;     %mS/cm^2
    
-    % Na Potentials
+    % Na Potential
     ENA = 115;                      % mV
 
-    % Leak Nernst Potential (mV)
+    % Leak Nernst Potential 
     EL = -0.01;                     % mV
 
     % Resistance 
@@ -34,8 +33,9 @@ function dy = hh_diff_eq(t,y, U, Ut, vrest, z, x)
     
     ven = ((Re * Id)*ones(size(x)))./(4*pi*sqrt(x.^2 + z^2));
 
-   % vN = vin - ven' - vrest;
-    vm = vin - vrest;
+    %vN = vin - ven' - vrest;
+    %vN = vin;
+    vm = vN - vrest;
 
     %% Alphas and Betas 
     % m Gates
@@ -47,17 +47,17 @@ function dy = hh_diff_eq(t,y, U, Ut, vrest, z, x)
     alphah = betah./exp((vm - 5.5)/5);
 
     %% Differential Equations
-    dvin = (1/Cm)*(Id - gNABar*m.^2.*h.*(vm-ENA) - gLeak*(vm-EL));
     dm = (-1*(alpham + betam).*m + alpham);
     dh = (-1*(alphah + betah).*h + alphah);
     imi = gNABar*m.^2.*h.*(vm-ENA) + gLeak*(vm-EL);
 
     vNConv = conv(vN, [1 -2 1], 'same');
     venConv = conv(ven, [1 -2 1], 'same')';
+    disp(vNConv')
 
-    dvN = (1/Cm)*(-imi + ((axonDi * delX)/(4*Ri*NoRWidth))*(vNConv/delX^2 + venConv/delX^2));    
+    dvN = (1/Cm)*(-imi + ((axonDi * delX)/(4*Ri*NoRWidth))*(((vNConv)/(delX^2)) + ((venConv)/(delX^2))));    
 
-    dy = [dvin; dm; dh; dvN];
+    dy = [dvN; dm; dh];
 
 
 end
